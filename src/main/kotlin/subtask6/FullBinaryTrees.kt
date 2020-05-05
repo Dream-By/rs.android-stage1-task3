@@ -1,6 +1,6 @@
 package subtask6
 
-import java.util.*
+data class Row(var count:Int, var parent: Row?, var value: Array<String> = arrayOf())
 
 
 class FullBinaryTrees {
@@ -9,54 +9,77 @@ class FullBinaryTrees {
     fun stringForNodeCount(count: Int): String {
         //throw NotImplementedError("Not implemented")
 
-        var resultStr: String = ""
-        resultvariant(count).stream().forEach { node ->
-            var string = "[0,${node}]"
-
-            string = string.replace(",]", "]")
-            while (string.endsWith(",null,null]")) {
-                string = string.replace(",null,null]", "]")
-            }
-            resultStr += string
+        if(1 > count) {
+            return "[]"
         }
-        return "[$resultStr]"
+        if(0 == count % 2) {
+            return "[]"
+        }
+
+        val root = Row(count-1, null, arrayOf("0"))
+        val children = getChildren(root)
+        var result: Array<String> = arrayOf()
+        for(child in children) {
+            var row: Array<String> = arrayOf()
+            var node: Row? = child
+            while(null != node) {
+                row = node.value + row
+                node = node.parent
+            }
+            result += arrayOf("[" + row.joinToString(",") + "]")
+        }
+        //result.forEach { println(it) }
+        return "[" + result.joinToString(" ") + "]"
     }
 
-    private var treememo = hashMapOf<Int, List<TreeNode>>()
-
-    private fun resultvariant(N: Int): List<TreeNode> {
-        if (!treememo.containsKey(N)) {
-            val ans = LinkedList<TreeNode>()
-            if (N == 1) {
-                ans.add(TreeNode(0))
-            } else if (N % 2 == 1) {
-                for (x in 0 until N) {
-                    val y = N - 1 - x
-                    for (left in resultvariant(x))
-                        for (right in resultvariant(y)) {
-                            val bns = TreeNode(0)
-                            bns.left = left
-                            bns.right = right
-                            ans.add(bns)
-                        }
+    private fun getChildren(parent: Row): Array<Row> {
+        val count: Int = parent.count
+        if( 0 == count ) {
+            return arrayOf(Row(0, parent, arrayOf()))
+        }
+        val row = parent.value
+        val size = row.size - 1
+        var result: Array<Row> = arrayOf()
+        for(i in 0..size) {
+            if("0" == row[i]) {
+                if(0 == result.size) {
+                    result += arrayOf(Row(count, parent)) + arrayOf(Row(count, parent))
+                } else {
+                    result = duplicateRowArray(result)
+                }
+                for(j in 0..(result.size / 2 - 1)) {
+                    if(1 < result[j*2].count) {
+                        result[j*2].value += arrayOf("0","0")
+                        result[j*2].count -= 2
+                        result[j*2 + 1].value += arrayOf("null","null")
+                    }
                 }
             }
-            treememo[N] = ans
         }
-        return treememo[N]!!
-    }
-
-    class TreeNode(var id: Int) {
-        var left: TreeNode? = null
-        var right: TreeNode? = null
-
-        override fun toString(): String {
-            return if (left != null && right != null) {
-                "${left!!.id},${right!!.id}," + left.toString() + right.toString()
+        var withChildren: Array<Row> = arrayOf()
+        for(r in result) {
+            if(2 > r.count) {
+                if(r.value.size > 0) {
+                    withChildren += r
+                }
             } else {
-                "${left.toString()},${right.toString()},"
+                withChildren += getChildren(r)
             }
         }
 
+        return withChildren
+    }
+
+    private fun duplicateRowArray(rowArray: Array<Row>): Array<Row> {
+        var newArray: Array<Row> = arrayOf()
+        for(row in rowArray) {
+            newArray += row
+            if(0 == row.count) {
+                newArray += Row(row.count, row.parent, arrayOf())
+            } else {
+                newArray += Row(row.count, row.parent, row.value)
+            }
+        }
+        return newArray
     }
 }
